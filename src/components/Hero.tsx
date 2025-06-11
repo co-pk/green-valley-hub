@@ -1,13 +1,17 @@
-
 import { ArrowRight, Users, Award, BookOpen } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 const Hero = () => {
   return (
     <section id="home" className="relative min-h-screen flex items-center justify-center overflow-hidden">
-      {/* Background with gradient overlay */}
-      <div className="absolute inset-0 bg-gradient-to-br from-valley-green via-valley-blue to-valley-green-dark"></div>
-      <div className="absolute inset-0 bg-black/20"></div>
+      {/* Background with students holding books image */}
+      <div 
+        className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+        style={{
+          backgroundImage: 'url("https://images.unsplash.com/photo-1513836279014-a89f7a76ae86?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=3654&q=80")'
+        }}
+      ></div>
+      <div className="absolute inset-0 bg-black/60"></div>
       
       {/* Decorative shapes */}
       <div className="absolute top-20 left-10 w-32 h-32 bg-white/10 rounded-full blur-xl"></div>
