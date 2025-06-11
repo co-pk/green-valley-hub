@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Calendar, FileText, Users, CheckCircle, Send } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -8,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
+import { Link } from 'react-router-dom';
 
 const Admissions = () => {
   const { toast } = useToast();
@@ -71,10 +71,16 @@ const Admissions = () => {
       <div className="container mx-auto px-4">
         <div className="text-center mb-16">
           <h2 className="text-4xl md:text-5xl font-bold mb-6 text-valley-green">Join Our Community</h2>
-          <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
+          <p className="text-xl text-muted-foreground max-w-3xl mx-auto mb-8">
             Begin your child's journey to academic excellence. Learn about our admission process 
             and take the first step toward a brighter future.
           </p>
+          <Button asChild className="bg-valley-green hover:bg-valley-green-dark text-lg px-8 py-3">
+            <Link to="/apply">
+              <Send className="w-5 h-5 mr-2" />
+              Start Full Application
+            </Link>
+          </Button>
         </div>
 
         {/* Admission Process */}
@@ -101,12 +107,12 @@ const Admissions = () => {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-          {/* Application Form */}
+          {/* Quick Inquiry Form */}
           <Card className="h-fit">
             <CardHeader>
-              <CardTitle className="text-2xl text-valley-green">Application Form</CardTitle>
+              <CardTitle className="text-2xl text-valley-green">Quick Inquiry Form</CardTitle>
               <p className="text-muted-foreground">
-                Start your application process by providing basic information below.
+                Get started with basic information, or proceed to our full application form.
               </p>
             </CardHeader>
             <CardContent>
@@ -206,10 +212,18 @@ const Admissions = () => {
                   />
                 </div>
 
-                <Button type="submit" className="w-full bg-valley-green hover:bg-valley-green-dark">
-                  <Send className="w-4 h-4 mr-2" />
-                  Submit Application
-                </Button>
+                <div className="space-y-3">
+                  <Button type="submit" className="w-full bg-valley-green hover:bg-valley-green-dark">
+                    <Send className="w-4 h-4 mr-2" />
+                    Submit Quick Inquiry
+                  </Button>
+                  <Button asChild variant="outline" className="w-full">
+                    <Link to="/apply">
+                      <FileText className="w-4 h-4 mr-2" />
+                      Complete Full Application
+                    </Link>
+                  </Button>
+                </div>
               </form>
             </CardContent>
           </Card>
