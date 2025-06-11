@@ -1,5 +1,6 @@
 
 import { Facebook, Twitter, Instagram, Youtube, Mail, Phone, MapPin } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 const Footer = () => {
   const currentYear = new Date().getFullYear();
@@ -13,11 +14,11 @@ const Footer = () => {
   ];
 
   const resources = [
-    { name: 'Student Portal', href: '#' },
-    { name: 'Parent Portal', href: '#' },
-    { name: 'Staff Directory', href: '#staff' },
-    { name: 'Calendar', href: '#' },
-    { name: 'Library', href: '#' }
+    { name: 'Student Portal', href: '/student-portal' },
+    { name: 'Parent Portal', href: '/parent-portal' },
+    { name: 'Staff Directory', href: '/staff-directory' },
+    { name: 'Calendar', href: '/calendar' },
+    { name: 'Library', href: '/library' }
   ];
 
   return (
@@ -69,12 +70,12 @@ const Footer = () => {
             <ul className="space-y-2">
               {resources.map((resource, index) => (
                 <li key={index}>
-                  <a 
-                    href={resource.href} 
+                  <Link 
+                    to={resource.href} 
                     className="text-gray-300 hover:text-valley-green transition-colors text-sm"
                   >
                     {resource.name}
-                  </a>
+                  </Link>
                 </li>
               ))}
             </ul>
