@@ -11,6 +11,7 @@ import ParentPortal from "./pages/ParentPortal";
 import StaffDirectory from "./pages/StaffDirectory";
 import Calendar from "./pages/Calendar";
 import Library from "./pages/Library";
+import Voting from "./pages/Voting";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -29,6 +30,7 @@ const App = () => (
           <Route path="/staff-directory" element={<StaffDirectory />} />
           <Route path="/calendar" element={<Calendar />} />
           <Route path="/library" element={<Library />} />
+          <Route path="/voting" element={<Voting />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

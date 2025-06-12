@@ -1,4 +1,3 @@
-
 import { Facebook, Twitter, Instagram, Youtube, Mail, Phone, MapPin } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
@@ -18,7 +17,8 @@ const Footer = () => {
     { name: 'Parent Portal', href: '/parent-portal' },
     { name: 'Staff Directory', href: '/staff-directory' },
     { name: 'Calendar', href: '/calendar' },
-    { name: 'Library', href: '/library' }
+    { name: 'Library', href: '/library' },
+    { name: 'Voting Platform', href: '/voting' }
   ];
 
   return (
