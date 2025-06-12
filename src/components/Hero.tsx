@@ -1,3 +1,4 @@
+
 import { ArrowRight, Users, Award, BookOpen } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
@@ -33,7 +34,11 @@ const Hero = () => {
               Schedule a Tour
               <ArrowRight className="ml-2 w-5 h-5" />
             </Button>
-            <Button size="lg" variant="outline" className="border-white text-white hover:bg-white hover:text-valley-green">
+            <Button 
+              size="lg" 
+              variant="outline" 
+              className="border-2 border-white text-white hover:bg-white hover:text-black bg-white/10 backdrop-blur-sm font-semibold shadow-lg"
+            >
               Learn More
             </Button>
           </div>
