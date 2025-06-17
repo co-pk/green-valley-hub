@@ -163,23 +163,26 @@ const ChatBot = () => {
             )}
           </ScrollArea>
           
-          <div className="p-4 border-t">
-            <div className="flex space-x-2">
-              <Input
-                value={inputValue}
-                onChange={(e) => setInputValue(e.target.value)}
-                placeholder="Type your message..."
-                onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
-                className="flex-1"
-              />
-              <Button
-                onClick={() => handleSendMessage()}
-                size="sm"
-                className="bg-valley-green hover:bg-valley-green-dark"
-              >
-                <Send className="w-4 h-4" />
-              </Button>
+          <div className="p-4 border-t-2 border-gray-200 bg-gray-50/50">
+            <div className="bg-white rounded-lg border-2 border-valley-green/20 p-1 shadow-sm">
+              <div className="flex space-x-2">
+                <Input
+                  value={inputValue}
+                  onChange={(e) => setInputValue(e.target.value)}
+                  placeholder="Type your message here..."
+                  onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
+                  className="flex-1 border-0 focus-visible:ring-0 bg-transparent placeholder:text-gray-500"
+                />
+                <Button
+                  onClick={() => handleSendMessage()}
+                  size="sm"
+                  className="bg-valley-green hover:bg-valley-green-dark px-3"
+                >
+                  <Send className="w-4 h-4" />
+                </Button>
+              </div>
             </div>
+            <p className="text-xs text-gray-400 mt-2 text-center">Press Enter to send</p>
           </div>
         </CardContent>
       </Card>
