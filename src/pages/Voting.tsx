@@ -110,9 +110,9 @@ const Voting = () => {
         <section className="bg-gradient-to-r from-valley-blue to-valley-green py-16 text-white">
           <div className="container mx-auto px-4">
             <div className="max-w-4xl mx-auto">
-              <div className="flex justify-between items-start mb-6">
-                <div className="text-center flex-1">
-                  <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-6">
+              <div className="flex flex-col md:flex-row justify-between items-center mb-6">
+                <div className="text-center md:text-left flex-1 mb-6 md:mb-0">
+                  <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto md:mx-0 mb-6">
                     <Vote className="w-8 h-8" />
                   </div>
                   <h1 className="text-4xl md:text-5xl font-bold mb-6">Student Voting Platform</h1>
@@ -120,18 +120,19 @@ const Voting = () => {
                     Welcome, {student?.name}! Participate in school elections and make your voice heard.
                   </p>
                 </div>
-                <div className="flex flex-col items-end">
-                  <div className="bg-white/20 backdrop-blur-sm rounded-lg p-3 mb-3">
+                <div className="flex flex-col items-center md:items-end space-y-3">
+                  <div className="bg-white/20 backdrop-blur-sm rounded-lg p-4 text-center md:text-right">
                     <p className="text-sm text-white/90">Logged in as:</p>
-                    <p className="font-semibold">{student?.name}</p>
+                    <p className="font-semibold text-lg">{student?.name}</p>
+                    <p className="text-xs text-white/80">ID: {student?.studentId}</p>
                   </div>
                   <Button
                     onClick={handleLogout}
                     variant="outline"
-                    size="sm"
-                    className="border-white text-white hover:bg-white hover:text-valley-green"
+                    size="lg"
+                    className="border-2 border-white text-white hover:bg-white hover:text-valley-green font-semibold px-6 py-3 shadow-lg transition-all duration-200 hover:shadow-xl"
                   >
-                    <LogOut className="w-4 h-4 mr-2" />
+                    <LogOut className="w-5 h-5 mr-2" />
                     Logout
                   </Button>
                 </div>
