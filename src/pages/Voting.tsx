@@ -1,15 +1,51 @@
-
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import { Vote, Users, Calendar, CheckCircle, Clock, Trophy } from 'lucide-react';
+import { Vote, Users, Calendar, CheckCircle, Clock, Trophy, LogOut } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '@/hooks/useAuth';
+import { toast } from '@/hooks/use-toast';
 
 const Voting = () => {
   const [hasVoted, setHasVoted] = useState<Record<string, boolean>>({});
+  const { student, isAuthenticated, isLoading, logout } = useAuth();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!isLoading && !isAuthenticated) {
+      navigate('/login');
+    }
+  }, [isAuthenticated, isLoading, navigate]);
+
+  const handleLogout = () => {
+    logout();
+    toast({
+      title: "Logged Out",
+      description: "You have been successfully logged out.",
+    });
+    navigate('/login');
+  };
+
+  // Show loading while checking authentication
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-valley-green mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Redirect if not authenticated (this shouldn't show due to useEffect, but keep as fallback)
+  if (!isAuthenticated) {
+    return null;
+  }
 
   const activeElections = [
     {
@@ -55,6 +91,10 @@ const Voting = () => {
     setHasVoted(prev => ({ ...prev, [electionId]: true }));
     // In a real application, this would send the vote to a backend
     console.log(`Voted for candidate ${candidateId} in election ${electionId}`);
+    toast({
+      title: "Vote Recorded",
+      description: "Your vote has been successfully recorded!",
+    });
   };
 
   const getVotePercentage = (votes: number, total: number) => {
@@ -69,14 +109,33 @@ const Voting = () => {
         {/* Hero Section */}
         <section className="bg-gradient-to-r from-valley-blue to-valley-green py-16 text-white">
           <div className="container mx-auto px-4">
-            <div className="max-w-4xl mx-auto text-center">
-              <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-6">
-                <Vote className="w-8 h-8" />
+            <div className="max-w-4xl mx-auto">
+              <div className="flex justify-between items-start mb-6">
+                <div className="text-center flex-1">
+                  <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <Vote className="w-8 h-8" />
+                  </div>
+                  <h1 className="text-4xl md:text-5xl font-bold mb-6">Student Voting Platform</h1>
+                  <p className="text-xl text-white/90">
+                    Welcome, {student?.name}! Participate in school elections and make your voice heard.
+                  </p>
+                </div>
+                <div className="flex flex-col items-end">
+                  <div className="bg-white/20 backdrop-blur-sm rounded-lg p-3 mb-3">
+                    <p className="text-sm text-white/90">Logged in as:</p>
+                    <p className="font-semibold">{student?.name}</p>
+                  </div>
+                  <Button
+                    onClick={handleLogout}
+                    variant="outline"
+                    size="sm"
+                    className="border-white text-white hover:bg-white hover:text-valley-green"
+                  >
+                    <LogOut className="w-4 h-4 mr-2" />
+                    Logout
+                  </Button>
+                </div>
               </div>
-              <h1 className="text-4xl md:text-5xl font-bold mb-6">Student Voting Platform</h1>
-              <p className="text-xl text-white/90">
-                Participate in school elections and make your voice heard in shaping our school community.
-              </p>
             </div>
           </div>
         </section>
