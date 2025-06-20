@@ -16,10 +16,10 @@ const Voting = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
+    if (!isLoading && (!isAuthenticated || !student)) {
       navigate('/login');
     }
-  }, [isAuthenticated, isLoading, navigate]);
+  }, [isAuthenticated, isLoading, navigate, student]);
 
   const handleLogout = () => {
     logout();
@@ -43,7 +43,7 @@ const Voting = () => {
   }
 
   // Redirect if not authenticated (this shouldn't show due to useEffect, but keep as fallback)
-  if (!isAuthenticated) {
+  if (!isAuthenticated || !student) {
     return null;
   }
 
@@ -89,7 +89,6 @@ const Voting = () => {
 
   const handleVote = (electionId: string, candidateId: number) => {
     setHasVoted(prev => ({ ...prev, [electionId]: true }));
-    // In a real application, this would send the vote to a backend
     console.log(`Voted for candidate ${candidateId} in election ${electionId}`);
     toast({
       title: "Vote Recorded",

@@ -1,11 +1,49 @@
-
+import { useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import { User, BookOpen, Calendar, MessageSquare, FileText, Award } from 'lucide-react';
+import { User, BookOpen, Calendar, MessageSquare, FileText, Award, LogOut } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { useAuth } from '@/hooks/useAuth';
+import { toast } from '@/hooks/use-toast';
 
 const StudentPortal = () => {
+  const { student, isAuthenticated, isLoading, logout } = useAuth();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!isLoading && (!isAuthenticated || !student)) {
+      navigate('/student-login');
+    }
+  }, [isAuthenticated, isLoading, navigate, student]);
+
+  const handleLogout = () => {
+    logout();
+    toast({
+      title: "Logged Out",
+      description: "You have been successfully logged out.",
+    });
+    navigate('/student-login');
+  };
+
+  // Show loading while checking authentication
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-valley-green mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Redirect if not authenticated (this shouldn't show due to useEffect, but keep as fallback)
+  if (!isAuthenticated || !student) {
+    return null;
+  }
+
   const quickLinks = [
     { title: 'My Grades', icon: Award, description: 'View current grades and progress reports' },
     { title: 'Assignments', icon: FileText, description: 'Check homework and project deadlines' },
@@ -23,11 +61,31 @@ const StudentPortal = () => {
         {/* Hero Section */}
         <section className="bg-gradient-to-r from-valley-green to-valley-blue py-16 text-white">
           <div className="container mx-auto px-4">
-            <div className="max-w-4xl mx-auto text-center">
-              <h1 className="text-4xl md:text-5xl font-bold mb-6">Student Portal</h1>
-              <p className="text-xl text-white/90">
-                Access your academic information, assignments, and school resources all in one place.
-              </p>
+            <div className="max-w-4xl mx-auto">
+              <div className="flex flex-col md:flex-row justify-between items-center mb-6">
+                <div className="text-center md:text-left flex-1 mb-6 md:mb-0">
+                  <h1 className="text-4xl md:text-5xl font-bold mb-6">Student Portal</h1>
+                  <p className="text-xl text-white/90">
+                    Welcome back, {student.name}! Access your academic information and school resources.
+                  </p>
+                </div>
+                <div className="flex flex-col items-center md:items-end space-y-3">
+                  <div className="bg-white/20 backdrop-blur-sm rounded-lg p-4 text-center md:text-right">
+                    <p className="text-sm text-white/90">Logged in as:</p>
+                    <p className="font-semibold text-lg">{student.name}</p>
+                    <p className="text-xs text-white/80">ID: {student.studentId}</p>
+                  </div>
+                  <Button
+                    onClick={handleLogout}
+                    variant="outline"
+                    size="lg"
+                    className="border-2 border-white text-white hover:bg-white hover:text-valley-green font-semibold px-6 py-3 shadow-lg transition-all duration-200 hover:shadow-xl"
+                  >
+                    <LogOut className="w-5 h-5 mr-2" />
+                    Logout
+                  </Button>
+                </div>
+              </div>
             </div>
           </div>
         </section>
@@ -36,7 +94,7 @@ const StudentPortal = () => {
         <section className="py-12">
           <div className="container mx-auto px-4">
             <div className="bg-white rounded-lg shadow-lg p-8 mb-8">
-              <h2 className="text-2xl font-bold text-valley-green mb-4">Welcome back, Student!</h2>
+              <h2 className="text-2xl font-bold text-valley-green mb-4">Welcome back, {student.name}!</h2>
               <p className="text-muted-foreground mb-6">
                 Here's your personalized dashboard with quick access to everything you need for your academic journey.
               </p>

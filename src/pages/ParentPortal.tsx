@@ -1,11 +1,49 @@
-
+import { useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import { Users, Calendar, MessageSquare, FileText, CreditCard, Bell } from 'lucide-react';
+import { Users, Calendar, MessageSquare, FileText, CreditCard, Bell, LogOut } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { useAuth } from '@/hooks/useAuth';
+import { toast } from '@/hooks/use-toast';
 
 const ParentPortal = () => {
+  const { parent, isAuthenticated, isLoading, logout } = useAuth();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!isLoading && (!isAuthenticated || !parent)) {
+      navigate('/parent-login');
+    }
+  }, [isAuthenticated, isLoading, navigate, parent]);
+
+  const handleLogout = () => {
+    logout();
+    toast({
+      title: "Logged Out",
+      description: "You have been successfully logged out.",
+    });
+    navigate('/parent-login');
+  };
+
+  // Show loading while checking authentication
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-valley-blue mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Redirect if not authenticated (this shouldn't show due to useEffect, but keep as fallback)
+  if (!isAuthenticated || !parent) {
+    return null;
+  }
+
   const quickLinks = [
     { title: 'Student Progress', icon: FileText, description: 'Monitor your child\'s academic performance' },
     { title: 'Attendance Records', icon: Users, description: 'View attendance history and reports' },
@@ -23,11 +61,32 @@ const ParentPortal = () => {
         {/* Hero Section */}
         <section className="bg-gradient-to-r from-valley-blue to-valley-green py-16 text-white">
           <div className="container mx-auto px-4">
-            <div className="max-w-4xl mx-auto text-center">
-              <h1 className="text-4xl md:text-5xl font-bold mb-6">Parent Portal</h1>
-              <p className="text-xl text-white/90">
-                Stay connected with your child's education and school community.
-              </p>
+            <div className="max-w-4xl mx-auto">
+              <div className="flex flex-col md:flex-row justify-between items-center mb-6">
+                <div className="text-center md:text-left flex-1 mb-6 md:mb-0">
+                  <h1 className="text-4xl md:text-5xl font-bold mb-6">Parent Portal</h1>
+                  <p className="text-xl text-white/90">
+                    Welcome back, {parent.name}! Stay connected with your children's education.
+                  </p>
+                </div>
+                <div className="flex flex-col items-center md:items-end space-y-3">
+                  <div className="bg-white/20 backdrop-blur-sm rounded-lg p-4 text-center md:text-right">
+                    <p className="text-sm text-white/90">Logged in as:</p>
+                    <p className="font-semibold text-lg">{parent.name}</p>
+                    <p className="text-xs text-white/80">ID: {parent.parentId}</p>
+                    <p className="text-xs text-white/80">Children: {parent.children.join(', ')}</p>
+                  </div>
+                  <Button
+                    onClick={handleLogout}
+                    variant="outline"
+                    size="lg"
+                    className="border-2 border-white text-white hover:bg-white hover:text-valley-blue font-semibold px-6 py-3 shadow-lg transition-all duration-200 hover:shadow-xl"
+                  >
+                    <LogOut className="w-5 h-5 mr-2" />
+                    Logout
+                  </Button>
+                </div>
+              </div>
             </div>
           </div>
         </section>
@@ -36,13 +95,13 @@ const ParentPortal = () => {
         <section className="py-12">
           <div className="container mx-auto px-4">
             <div className="bg-white rounded-lg shadow-lg p-8 mb-8">
-              <h2 className="text-2xl font-bold text-valley-green mb-4">Welcome, Parent!</h2>
+              <h2 className="text-2xl font-bold text-valley-green mb-4">Welcome, {parent.name}!</h2>
               <p className="text-muted-foreground mb-6">
-                Access all the tools you need to support your child's educational journey and stay informed about school activities.
+                Access all the tools you need to support your children's educational journey and stay informed about school activities.
               </p>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div className="text-center p-4 bg-valley-green/10 rounded-lg">
-                  <div className="text-2xl font-bold text-valley-green">2</div>
+                  <div className="text-2xl font-bold text-valley-green">{parent.children.length}</div>
                   <div className="text-sm text-muted-foreground">Children Enrolled</div>
                 </div>
                 <div className="text-center p-4 bg-valley-blue/10 rounded-lg">

@@ -13,6 +13,8 @@ import Calendar from "./pages/Calendar";
 import Library from "./pages/Library";
 import Voting from "./pages/Voting";
 import Login from "./pages/Login";
+import StudentLogin from "./pages/StudentLogin";
+import ParentLogin from "./pages/ParentLogin";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -33,6 +35,8 @@ const App = () => (
           <Route path="/library" element={<Library />} />
           <Route path="/voting" element={<Voting />} />
           <Route path="/login" element={<Login />} />
+          <Route path="/student-login" element={<StudentLogin />} />
+          <Route path="/parent-login" element={<ParentLogin />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
