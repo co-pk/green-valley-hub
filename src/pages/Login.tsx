@@ -10,6 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useForm } from 'react-hook-form';
 import { toast } from '@/hooks/use-toast';
+import { useAuth } from '@/hooks/useAuth';
 
 interface LoginFormData {
   studentId: string;
@@ -19,6 +20,7 @@ interface LoginFormData {
 const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
+  const { loginStudent } = useAuth();
   
   const form = useForm<LoginFormData>({
     defaultValues: {
@@ -28,21 +30,14 @@ const Login = () => {
   });
 
   const onSubmit = (data: LoginFormData) => {
-    // Simulate authentication - in a real app, this would validate against a backend
     if (data.studentId && data.password) {
-      // Store authentication state in localStorage
-      localStorage.setItem('studentAuth', JSON.stringify({
-        studentId: data.studentId,
-        name: `Student ${data.studentId}`,
-        loginTime: new Date().toISOString()
-      }));
+      loginStudent(data.studentId, `Student ${data.studentId}`);
       
       toast({
         title: "Login Successful",
         description: "Welcome! You can now participate in voting.",
       });
       
-      // Redirect to voting platform
       navigate('/voting');
     } else {
       toast({
