@@ -1,3 +1,4 @@
+
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Header from '@/components/Header';
@@ -76,7 +77,6 @@ const StudentPortal = () => {
                     <p className="text-xs text-white/80">ID: {student.studentId}</p>
                   </div>
                   <Button
-                    onClick={handleLogout}
                     variant="outline"
                     size="lg"
                     className="border-2 border-white text-white hover:bg-white hover:text-valley-green font-bold px-6 py-3 shadow-lg transition-all duration-200 hover:shadow-xl"
