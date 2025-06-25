@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Calendar, FileText, Users, CheckCircle, Send, Upload, Download } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -15,6 +14,7 @@ const Apply = () => {
   const { toast } = useToast();
   const [formData, setFormData] = useState({
     studentName: '',
+    studentEmail: '',
     parentName: '',
     email: '',
     phone: '',
@@ -65,6 +65,7 @@ const Apply = () => {
     // Reset form
     setFormData({
       studentName: '',
+      studentEmail: '',
       parentName: '',
       email: '',
       phone: '',
@@ -166,6 +167,18 @@ const Apply = () => {
                     
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
                       <div>
+                        <Label htmlFor="studentEmail">Student Email Address *</Label>
+                        <Input
+                          id="studentEmail"
+                          type="email"
+                          value={formData.studentEmail}
+                          onChange={(e) => handleInputChange('studentEmail', e.target.value)}
+                          required
+                          className="mt-1"
+                          placeholder="student@example.com"
+                        />
+                      </div>
+                      <div>
                         <Label htmlFor="grade">Grade Level Applying For *</Label>
                         <Select value={formData.grade} onValueChange={(value) => handleInputChange('grade', value)}>
                           <SelectTrigger className="mt-1">
@@ -188,6 +201,9 @@ const Apply = () => {
                           </SelectContent>
                         </Select>
                       </div>
+                    </div>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
                       <div>
                         <Label htmlFor="previousSchool">Previous School</Label>
                         <Input
@@ -198,6 +214,7 @@ const Apply = () => {
                           placeholder="Name of previous school"
                         />
                       </div>
+                      <div></div>
                     </div>
 
                     <div className="mt-4">
@@ -230,7 +247,7 @@ const Apply = () => {
                         />
                       </div>
                       <div>
-                        <Label htmlFor="email">Email Address *</Label>
+                        <Label htmlFor="email">Parent Email Address *</Label>
                         <Input
                           id="email"
                           type="email"
@@ -238,7 +255,7 @@ const Apply = () => {
                           onChange={(e) => handleInputChange('email', e.target.value)}
                           required
                           className="mt-1"
-                          placeholder="email@example.com"
+                          placeholder="parent@example.com"
                         />
                       </div>
                     </div>
