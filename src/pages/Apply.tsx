@@ -1,3 +1,5 @@
+import { db } from "@/lib/firebase";
+import { collection, addDoc, Timestamp } from "firebase/firestore";
 import { useState } from 'react';
 import { Calendar, FileText, Users, CheckCircle, Send, Upload, Download } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -9,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useToast } from '@/hooks/use-toast';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
+
 
 const Apply = () => {
   const { toast } = useToast();
@@ -53,21 +56,36 @@ const Apply = () => {
       description: 'Receive your admission decision and complete the enrollment process.'
     }
   ];
+const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    console.log('Full application submitted:', formData);
+  try {
+    const response = await fetch("http://localhost:5000/api/apply", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(formData),
+    });
+
+    if (!response.ok) {
+      throw new Error("Failed to submit");
+    }
+
+    const data = await response.json();
+    console.log("✅ Submission success", data);
+
     toast({
       title: "Application Submitted Successfully!",
-      description: "Thank you for applying to Green Valley School. We'll review your application and contact you within 5-7 business days.",
+      description: "Thank you for applying to Green Valley School. We'll review your application and contact you soon.",
     });
-    
-    // Reset form
+
+    // ✅ Clear form after success
     setFormData({
       studentName: '',
-      studentEmail: '',
       parentName: '',
       email: '',
+      studentEmail: '',
       phone: '',
       grade: '',
       previousSchool: '',
@@ -81,10 +99,18 @@ const Apply = () => {
       whyGreenValley: '',
       additionalInfo: ''
     });
-  };
 
+  } catch (error) {
+    console.error("❌ Submission error:", error);
+    toast({
+      title: "Submission Failed",
+      description: "There was an error submitting your application. Please try again.",
+      variant: "destructive",
+    });
+  }
+};
   const handleInputChange = (field: string, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+    setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
   return (
