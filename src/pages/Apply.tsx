@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Calendar, FileText, Users, CheckCircle, Send, Upload, Download } from 'lucide-react';
+import { Calendar, FileText, Users, CheckCircle, Send, Upload, Download, CreditCard, DollarSign } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -28,7 +28,12 @@ const Apply = () => {
     previousGrades: '',
     extracurriculars: '',
     whyGreenValley: '',
-    additionalInfo: ''
+    additionalInfo: '',
+    paymentMethod: '',
+    cardNumber: '',
+    expiryDate: '',
+    cvv: '',
+    cardholderName: ''
   });
 
   const admissionSteps = [
@@ -79,7 +84,12 @@ const Apply = () => {
       previousGrades: '',
       extracurriculars: '',
       whyGreenValley: '',
-      additionalInfo: ''
+      additionalInfo: '',
+      paymentMethod: '',
+      cardNumber: '',
+      expiryDate: '',
+      cvv: '',
+      cardholderName: ''
     });
   };
 
@@ -367,6 +377,111 @@ const Apply = () => {
                     </div>
                   </div>
 
+                  {/* Payment Information */}
+                  <div>
+                    <h3 className="text-lg font-semibold mb-4 text-valley-green flex items-center">
+                      <DollarSign className="w-5 h-5 mr-2" />
+                      Application Fee Payment
+                    </h3>
+                    <div className="bg-valley-green/5 border border-valley-green/20 p-4 rounded-lg mb-4">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-medium">Application Fee:</span>
+                        <span className="text-lg font-bold text-valley-green">$100.00</span>
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        This fee covers application processing and is non-refundable.
+                      </p>
+                    </div>
+
+                    <div className="space-y-4">
+                      <div>
+                        <Label htmlFor="paymentMethod">Payment Method *</Label>
+                        <Select value={formData.paymentMethod} onValueChange={(value) => handleInputChange('paymentMethod', value)}>
+                          <SelectTrigger className="mt-1">
+                            <SelectValue placeholder="Select payment method" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="credit-card">Credit Card</SelectItem>
+                            <SelectItem value="debit-card">Debit Card</SelectItem>
+                            <SelectItem value="bank-transfer">Bank Transfer</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      {(formData.paymentMethod === 'credit-card' || formData.paymentMethod === 'debit-card') && (
+                        <>
+                          <div>
+                            <Label htmlFor="cardholderName">Cardholder Name *</Label>
+                            <Input
+                              id="cardholderName"
+                              value={formData.cardholderName}
+                              onChange={(e) => handleInputChange('cardholderName', e.target.value)}
+                              required
+                              className="mt-1"
+                              placeholder="Full name as on card"
+                            />
+                          </div>
+
+                          <div>
+                            <Label htmlFor="cardNumber">Card Number *</Label>
+                            <Input
+                              id="cardNumber"
+                              value={formData.cardNumber}
+                              onChange={(e) => handleInputChange('cardNumber', e.target.value)}
+                              required
+                              className="mt-1"
+                              placeholder="1234 5678 9012 3456"
+                              maxLength={19}
+                            />
+                          </div>
+
+                          <div className="grid grid-cols-2 gap-4">
+                            <div>
+                              <Label htmlFor="expiryDate">Expiry Date *</Label>
+                              <Input
+                                id="expiryDate"
+                                value={formData.expiryDate}
+                                onChange={(e) => handleInputChange('expiryDate', e.target.value)}
+                                required
+                                className="mt-1"
+                                placeholder="MM/YY"
+                                maxLength={5}
+                              />
+                            </div>
+                            <div>
+                              <Label htmlFor="cvv">CVV *</Label>
+                              <Input
+                                id="cvv"
+                                value={formData.cvv}
+                                onChange={(e) => handleInputChange('cvv', e.target.value)}
+                                required
+                                className="mt-1"
+                                placeholder="123"
+                                maxLength={4}
+                              />
+                            </div>
+                          </div>
+                        </>
+                      )}
+
+                      {formData.paymentMethod === 'bank-transfer' && (
+                        <div className="bg-blue-50 border border-blue-200 p-4 rounded-lg">
+                          <h4 className="font-semibold text-blue-900 mb-2">Bank Transfer Details</h4>
+                          <div className="text-sm text-blue-800 space-y-1">
+                            <p><strong>Bank:</strong> Green Valley Community Bank</p>
+                            <p><strong>Account Name:</strong> Green Valley School</p>
+                            <p><strong>Account Number:</strong> 1234567890</p>
+                            <p><strong>Routing Number:</strong> 987654321</p>
+                            <p><strong>Reference:</strong> Please include student's full name</p>
+                          </div>
+                          <p className="text-xs text-blue-600 mt-2">
+                            Please allow 2-3 business days for transfer processing.
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
                   {/* Document Upload Section */}
                   <div>
                     <h3 className="text-lg font-semibold mb-4 text-valley-green">Required Documents</h3>
@@ -401,7 +516,7 @@ const Apply = () => {
 
                   <Button type="submit" className="w-full bg-valley-green hover:bg-valley-green-dark text-lg py-3">
                     <Send className="w-5 h-5 mr-2" />
-                    Submit Application
+                    Submit Application & Payment
                   </Button>
                 </form>
               </CardContent>
