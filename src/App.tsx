@@ -15,6 +15,9 @@ import Voting from "./pages/Voting";
 import Login from "./pages/Login";
 import StudentLogin from "./pages/StudentLogin";
 import ParentLogin from "./pages/ParentLogin";
+import AdminPortal from "./pages/AdminPortal";
+import AdminLogin from "./pages/AdminLogin";
+import AdminRouteGuard from "./components/AdminRouteGuard";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -37,6 +40,8 @@ const App = () => (
           <Route path="/login" element={<Login />} />
           <Route path="/student-login" element={<StudentLogin />} />
           <Route path="/parent-login" element={<ParentLogin />} />
+          <Route path="/admin-login" element={<AdminLogin />} />
+          <Route path="/admin" element={<AdminRouteGuard><AdminPortal /></AdminRouteGuard>} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

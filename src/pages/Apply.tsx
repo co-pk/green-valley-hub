@@ -33,6 +33,29 @@ const Apply = () => {
     whyGreenValley: '',
     additionalInfo: ''
   });
+  
+  const handleDownloadPDF = async () => {
+    try {
+      const response = await fetch('http://localhost:5000/api/generate-pdf', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData), // same data from the application
+      });
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${formData.studentName}_Application.pdf`;
+      a.click();
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error("❌ Failed to download PDF", error);
+    }
+  };
 
   const admissionSteps = [
     {
@@ -58,8 +81,16 @@ const Apply = () => {
   ];
 const handleSubmit = async (e: React.FormEvent) => {
   e.preventDefault();
-
+  
   try {
+    console.log("📤 Sending application data:", formData);
+    
+    // Show loading state
+    toast({
+      title: "Submitting...",
+      description: "Please wait while we process your application.",
+    });
+
     const response = await fetch("http://localhost:5000/api/apply", {
       method: "POST",
       headers: {
@@ -68,12 +99,50 @@ const handleSubmit = async (e: React.FormEvent) => {
       body: JSON.stringify(formData),
     });
 
+    const data = await response.json();
+    console.log("📥 Server response:", data);
+
     if (!response.ok) {
-      throw new Error("Failed to submit");
+      toast({
+        title: "Submission Error",
+        description: data.message || "Failed to submit application",
+        variant: "destructive"
+      });
+      return;
     }
 
-    const data = await response.json();
-    console.log("✅ Submission success", data);
+    // Show success message
+    toast({
+      title: "Application Submitted!",
+      description: "Your application has been submitted successfully. Please check your email for further instructions.",
+    });
+
+    // Reset form
+    setFormData({
+      studentName: '',
+      studentEmail: '',
+      parentName: '',
+      email: '',
+      phone: '',
+      grade: '',
+      previousSchool: '',
+      dateOfBirth: '',
+      address: '',
+      emergencyContact: '',
+      emergencyPhone: '',
+      medicalConditions: '',
+      previousGrades: '',
+      extracurriculars: '',
+      whyGreenValley: '',
+      additionalInfo: ''
+    });
+
+    console.log("✅ Submission success:", data);
+    
+    toast({
+      title: "Application Submitted",
+      description: "Your application has been submitted successfully. Please check your email for further instructions.",
+    });
 
     toast({
       title: "Application Submitted Successfully!",
@@ -112,6 +181,7 @@ const handleSubmit = async (e: React.FormEvent) => {
   const handleInputChange = (field: string, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
+  // Render the application form page
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -518,28 +588,34 @@ const handleSubmit = async (e: React.FormEvent) => {
             </Card>
 
             <Card>
-              <CardHeader>
-                <CardTitle className="text-xl text-valley-green">Download Forms</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <Button variant="outline" className="w-full justify-start">
-                  <Download className="w-4 h-4 mr-2" />
-                  Application Form (PDF)
-                </Button>
-                <Button variant="outline" className="w-full justify-start">
-                  <Download className="w-4 h-4 mr-2" />
-                  Health Form
-                </Button>
-                <Button variant="outline" className="w-full justify-start">
-                  <Download className="w-4 h-4 mr-2" />
-                  Financial Aid Form
-                </Button>
-              </CardContent>
-            </Card>
-          </div>
+            <CardHeader>
+              <CardTitle className="text-xl text-valley-green">Download Forms</CardTitle>
+            </CardHeader>
+
+            <CardContent className="space-y-3">
+            <Button
+            type="button"
+            className="w-full justify-start"
+            onClick={handleDownloadPDF}
+          >
+            <Download className="w-4 h-4 mr-2" />
+            Application Form (PDF)
+          </Button>
+
+            </CardContent>
+          </Card>
+
+          <Button variant="outline" className="w-full justify-start">
+            <Download className="w-4 h-4 mr-2" />
+            Health Form
+          </Button>
+          <Button variant="outline" className="w-full justify-start">
+            <Download className="w-4 h-4 mr-2" />
+            Financial Aid Form
+          </Button>
         </div>
       </div>
-
+      </div>
       <Footer />
     </div>
   );

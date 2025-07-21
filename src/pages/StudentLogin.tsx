@@ -29,20 +29,28 @@ const StudentLogin = () => {
     }
   });
 
-  const onSubmit = (data: LoginFormData) => {
-    if (data.studentId && data.password) {
-      loginStudent(data.studentId, `Student ${data.studentId}`);
-      
+  const onSubmit = async (data: LoginFormData) => {
+    if (!data.studentId || !data.password) {
       toast({
-        title: "Login Successful",
-        description: "Welcome to the Student Portal!",
+        title: "Validation Error",
+        description: "Please enter both Student ID and password.",
+        variant: "destructive"
       });
-      
+      return;
+    }
+
+    const result = await loginStudent(data.studentId, `Student ${data.studentId}`);
+    
+    if (result.success) {
+      toast({
+        title: "Welcome!",
+        description: "You've successfully logged into your student portal.",
+      });
       navigate('/student-portal');
     } else {
       toast({
-        title: "Login Failed",
-        description: "Please enter both Student ID and password.",
+        title: "Unable to Log In",
+        description: "Your Student ID or password is incorrect. If you're having trouble, please contact the school administration.",
         variant: "destructive"
       });
     }
