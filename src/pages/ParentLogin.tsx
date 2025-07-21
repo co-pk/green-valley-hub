@@ -29,22 +29,28 @@ const ParentLogin = () => {
     }
   });
 
-  const onSubmit = (data: LoginFormData) => {
-    if (data.parentId && data.password) {
-      // Simulate parent with children data
-      const children = ['John Doe', 'Jane Doe'];
-      loginParent(data.parentId, `Parent ${data.parentId}`, children);
-      
+  const onSubmit = async (data: LoginFormData) => {
+    if (!data.parentId || !data.password) {
       toast({
-        title: "Login Successful",
-        description: "Welcome to the Parent Portal!",
+        title: "Validation Error",
+        description: "Please enter both Parent ID and password.",
+        variant: "destructive"
       });
-      
+      return;
+    }
+
+    const result = await loginParent(data.parentId, data.password);
+    
+    if (result.success) {
+      toast({
+        title: "Welcome!",
+        description: "You've successfully logged into your parent portal.",
+      });
       navigate('/parent-portal');
     } else {
       toast({
-        title: "Login Failed",
-        description: "Please enter both Parent ID and password.",
+        title: "Unable to Log In",
+        description: "Your Parent ID or password is incorrect. If you're having trouble, please contact the school administration.",
         variant: "destructive"
       });
     }

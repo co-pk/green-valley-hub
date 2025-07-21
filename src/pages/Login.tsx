@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Header from '@/components/Header';
@@ -29,8 +28,32 @@ const Login = () => {
     }
   });
 
-  const onSubmit = (data: LoginFormData) => {
-    if (data.studentId && data.password) {
+  const onSubmit = async (data: LoginFormData) => {
+    if (!data.studentId || !data.password) {
+      toast({
+        title: "Login Failed",
+        description: "Please enter both Student ID and password.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      // Check if student is activated
+      const response = await fetch(`http://localhost:5000/api/checkActivation/${data.studentId}`);
+      const studentData = await response.json();
+
+      if (!studentData.isActive) {
+        toast({
+          title: "Account Not Activated",
+          description: "Please check your email for the activation code and activate your account.",
+          variant: "destructive"
+        });
+        navigate('/activate');
+        return;
+      }
+
+      // If activated, proceed with login
       loginStudent(data.studentId, `Student ${data.studentId}`);
       
       toast({
@@ -39,10 +62,10 @@ const Login = () => {
       });
       
       navigate('/voting');
-    } else {
+    } catch (error) {
       toast({
         title: "Login Failed",
-        description: "Please enter both Student ID and password.",
+        description: "An error occurred while logging in. Please try again.",
         variant: "destructive"
       });
     }

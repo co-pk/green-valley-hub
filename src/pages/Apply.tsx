@@ -1,3 +1,5 @@
+import { db } from "@/lib/firebase";
+import { collection, addDoc, Timestamp } from "firebase/firestore";
 import { useState } from 'react';
 import { Calendar, FileText, Users, CheckCircle, Send, Upload, Download, CreditCard, DollarSign } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -9,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useToast } from '@/hooks/use-toast';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
+
 
 const Apply = () => {
   const { toast } = useToast();
@@ -35,6 +38,29 @@ const Apply = () => {
     cvv: '',
     cardholderName: ''
   });
+  
+  const handleDownloadPDF = async () => {
+    try {
+      const response = await fetch('http://localhost:5000/api/generate-pdf', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData), // same data from the application
+      });
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${formData.studentName}_Application.pdf`;
+      a.click();
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error("❌ Failed to download PDF", error);
+    }
+  };
 
   const admissionSteps = [
     {
@@ -58,15 +84,44 @@ const Apply = () => {
       description: 'Receive your admission decision and complete the enrollment process.'
     }
   ];
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    console.log('Full application submitted:', formData);
-    toast({
-      title: "Application Submitted Successfully!",
-      description: "Thank you for applying to Green Valley School. We'll review your application and contact you within 5-7 business days.",
-    });
+const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+  
+  try {
+    console.log("📤 Sending application data:", formData);
     
+    // Show loading state
+    toast({
+      title: "Submitting...",
+      description: "Please wait while we process your application.",
+    });
+
+    const response = await fetch("http://localhost:5000/api/apply", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(formData),
+    });
+
+    const data = await response.json();
+    console.log("📥 Server response:", data);
+
+    if (!response.ok) {
+      toast({
+        title: "Submission Error",
+        description: data.message || "Failed to submit application",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Show success message
+    toast({
+      title: "Application Submitted!",
+      description: "Your application has been submitted successfully. Please check your email for further instructions.",
+    });
+
     // Reset form
     setFormData({
       studentName: '',
@@ -91,11 +146,52 @@ const Apply = () => {
       cvv: '',
       cardholderName: ''
     });
-  };
 
+    console.log("✅ Submission success:", data);
+    
+    toast({
+      title: "Application Submitted",
+      description: "Your application has been submitted successfully. Please check your email for further instructions.",
+    });
+
+    toast({
+      title: "Application Submitted Successfully!",
+      description: "Thank you for applying to Green Valley School. We'll review your application and contact you soon.",
+    });
+
+    // ✅ Clear form after success
+    setFormData({
+      studentName: '',
+      parentName: '',
+      email: '',
+      studentEmail: '',
+      phone: '',
+      grade: '',
+      previousSchool: '',
+      dateOfBirth: '',
+      address: '',
+      emergencyContact: '',
+      emergencyPhone: '',
+      medicalConditions: '',
+      previousGrades: '',
+      extracurriculars: '',
+      whyGreenValley: '',
+      additionalInfo: ''
+    });
+
+  } catch (error) {
+    console.error("❌ Submission error:", error);
+    toast({
+      title: "Submission Failed",
+      description: "There was an error submitting your application. Please try again.",
+      variant: "destructive",
+    });
+  }
+};
   const handleInputChange = (field: string, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+    setFormData((prev) => ({ ...prev, [field]: value }));
   };
+  // Render the application form page
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -607,28 +703,34 @@ const Apply = () => {
             </Card>
 
             <Card>
-              <CardHeader>
-                <CardTitle className="text-xl text-valley-green">Download Forms</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <Button variant="outline" className="w-full justify-start">
-                  <Download className="w-4 h-4 mr-2" />
-                  Application Form (PDF)
-                </Button>
-                <Button variant="outline" className="w-full justify-start">
-                  <Download className="w-4 h-4 mr-2" />
-                  Health Form
-                </Button>
-                <Button variant="outline" className="w-full justify-start">
-                  <Download className="w-4 h-4 mr-2" />
-                  Financial Aid Form
-                </Button>
-              </CardContent>
-            </Card>
-          </div>
+            <CardHeader>
+              <CardTitle className="text-xl text-valley-green">Download Forms</CardTitle>
+            </CardHeader>
+
+            <CardContent className="space-y-3">
+            <Button
+            type="button"
+            className="w-full justify-start"
+            onClick={handleDownloadPDF}
+          >
+            <Download className="w-4 h-4 mr-2" />
+            Application Form (PDF)
+          </Button>
+
+            </CardContent>
+          </Card>
+
+          <Button variant="outline" className="w-full justify-start">
+            <Download className="w-4 h-4 mr-2" />
+            Health Form
+          </Button>
+          <Button variant="outline" className="w-full justify-start">
+            <Download className="w-4 h-4 mr-2" />
+            Financial Aid Form
+          </Button>
         </div>
       </div>
-
+      </div>
       <Footer />
     </div>
   );
