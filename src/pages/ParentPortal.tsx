@@ -70,9 +70,9 @@ const ParentPortal = () => {
     },
   ];
 
-  // if (!parent) {
-  //   return <div>Loading...</div>;
-  // }
+  if (!parent) {
+    return <div>Loading...</div>;
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
