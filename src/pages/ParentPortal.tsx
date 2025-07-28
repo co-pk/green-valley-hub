@@ -21,6 +21,13 @@ const ParentPortal = () => {
   const { clearParent } = useParentStore();
   const { parent } = useParentStore();
 
+  //check if logged in as parenet redirect to login if not
+  useEffect(() => {
+    if (!parent) {
+      navigate("/parent-login");
+    }
+  }, [parent, navigate]);
+
   const handleLogout = () => {
     // logout();
     clearParent();
