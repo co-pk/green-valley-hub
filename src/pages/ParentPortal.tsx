@@ -21,7 +21,6 @@ const ParentPortal = () => {
   const { clearParent } = useParentStore();
   const { parent } = useParentStore();
 
-  //check if logged in as parenet redirect to login if not
   useEffect(() => {
     if (!parent) {
       navigate("/parent-login");
@@ -71,6 +70,10 @@ const ParentPortal = () => {
     },
   ];
 
+  // if (!parent) {
+  //   return <div>Loading...</div>;
+  // }
+
   return (
     <div className="min-h-screen bg-gray-50">
       <Header />
@@ -86,16 +89,18 @@ const ParentPortal = () => {
                     Parent Portal
                   </h1>
                   <p className="text-xl text-white/90">
-                    Welcome back, {parent.parentName}! Stay connected with your
+                    Welcome back, {parent?.parentName}! Stay connected with your
                     children's education.
                   </p>
                 </div>
                 <div className="flex flex-col items-center md:items-end space-y-3">
                   <div className="bg-white/20 backdrop-blur-sm rounded-lg p-4 text-center md:text-right">
                     <p className="text-sm text-white/90">Logged in as:</p>
-                    <p className="font-semibold text-lg">{parent.parentName}</p>
+                    <p className="font-semibold text-lg">
+                      {parent?.parentName}
+                    </p>
                     <p className="text-xs text-white/80">
-                      ID: {parent.parentId}
+                      ID: {parent?.parentId}
                     </p>
                     <p className="text-xs text-white/80">
                       Children: {parent.child}
