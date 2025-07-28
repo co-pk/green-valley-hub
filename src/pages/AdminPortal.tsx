@@ -151,18 +151,7 @@ const AdminPortal = () => {
       });
     }
     // Generate PDF with all info and passwords
-    await generatePdfApplication(
-      {
-        ...application,
-        studentId: application.studentId,
-        parentId: application.parentId,
-        studentPhone: application.phone,
-        parentPhone: application.emergencyPhone,
-      },
-      "/logo.png",
-      undefined,
-      undefined
-    );
+
     toast({
       title: "Success",
       description: `Application ${
