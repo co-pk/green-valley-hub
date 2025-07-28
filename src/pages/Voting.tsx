@@ -1,37 +1,127 @@
-import Header from '@/components/Header';
-import Footer from '@/components/Footer';
-import { Vote, Users, Calendar, CheckCircle, Clock, Trophy, LogOut } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
-import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useAuth } from '@/hooks/useAuth';
-import { toast } from '@/hooks/use-toast';
+import Header from "@/components/Header";
+import Footer from "@/components/Footer";
+import {
+  Vote,
+  Users,
+  Calendar,
+  CheckCircle,
+  Clock,
+  Trophy,
+  LogOut,
+} from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { toast } from "@/hooks/use-toast";
+import { useStudentStore } from "@/store/student.store";
+import { db } from "@/lib/firebase";
+import { collection, getDocs, doc, getDoc } from "firebase/firestore";
+import { recordStudentVote } from "@/utils/firebase";
 
 const Voting = () => {
+  const [polls, setPolls] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   const [hasVoted, setHasVoted] = useState<Record<string, boolean>>({});
-  const { student, isAuthenticated, isLoading, logout } = useAuth();
+  const [voting, setVoting] = useState<string | null>(null);
+  const { student } = useStudentStore();
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (!isLoading && (!isAuthenticated || !student)) {
-      navigate('/login');
+    if (!student) {
+      navigate("/login");
     }
-  }, [isAuthenticated, isLoading, navigate, student]);
+  }, [navigate, student]);
+
+  // Fetch polls and voting status
+  useEffect(() => {
+    const fetchPolls = async () => {
+      setLoading(true);
+      const snapshot = await getDocs(collection(db, "polls"));
+      const pollsData = await Promise.all(
+        snapshot.docs.map(async (docSnap) => {
+          const poll = { id: docSnap.id, ...docSnap.data() };
+          // Check if student has voted in this poll
+          let voted = false;
+          if (student) {
+            const voteRef = doc(
+              db,
+              `polls/${poll.id}/votes`,
+              student.studentId
+            );
+            const voteSnap = await getDoc(voteRef);
+            voted = voteSnap.exists();
+          }
+          return { ...poll, hasVoted: voted };
+        })
+      );
+      setPolls(pollsData);
+      setHasVoted(Object.fromEntries(pollsData.map((p) => [p.id, p.hasVoted])));
+      setLoading(false);
+    };
+    if (student) fetchPolls();
+  }, [student]);
+
+  const handleVote = async (pollId: string, nominationIdx: number) => {
+    if (!student) return;
+    setVoting(pollId);
+    try {
+      await recordStudentVote({
+        pollId,
+        nominationIdx,
+        studentId: student.studentId,
+      });
+      toast({
+        title: "Vote Recorded",
+        description: "Your vote has been successfully recorded!",
+      });
+      setHasVoted((prev) => ({ ...prev, [pollId]: true }));
+      // Update poll votes in UI
+      setPolls((prev) =>
+        prev.map((p) =>
+          p.id === pollId
+            ? {
+                ...p,
+                nominations: p.nominations.map((n: any, idx: number) =>
+                  idx === nominationIdx
+                    ? { ...n, totalVotes: (n.totalVotes || 0) + 1 }
+                    : n
+                ),
+                hasVoted: true,
+              }
+            : p
+        )
+      );
+    } catch (err: any) {
+      toast({
+        title: "Vote Failed",
+        description: err.message,
+        variant: "destructive",
+      });
+    }
+    setVoting(null);
+  };
+
+  const getVotePercentage = (votes: number, total: number) => {
+    return total > 0 ? Math.round((votes / total) * 100) : 0;
+  };
+
+  // Calculate total votes for each poll
+  const getTotalVotes = (nominations: any[]) =>
+    nominations.reduce((sum, n) => sum + (n.totalVotes || 0), 0);
 
   const handleLogout = () => {
-    logout();
     toast({
       title: "Logged Out",
       description: "You have been successfully logged out.",
     });
-    navigate('/login');
+    navigate("/login");
   };
 
   // Show loading while checking authentication
-  if (isLoading) {
+  if (!student) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
@@ -43,67 +133,14 @@ const Voting = () => {
   }
 
   // Redirect if not authenticated (this shouldn't show due to useEffect, but keep as fallback)
-  if (!isAuthenticated || !student) {
+  if (!student) {
     return null;
   }
-
-  const activeElections = [
-    {
-      id: 'student-council-2024',
-      title: 'Student Council President 2024',
-      description: 'Choose your next Student Council President',
-      endDate: '2024-03-15',
-      totalVotes: 847,
-      status: 'active',
-      candidates: [
-        { id: 1, name: 'Sarah Johnson', grade: '12th Grade', votes: 324, platform: 'Improving school facilities and student activities' },
-        { id: 2, name: 'Michael Chen', grade: '11th Grade', votes: 298, platform: 'Enhanced digital learning resources and environment' },
-        { id: 3, name: 'Emma Rodriguez', grade: '12th Grade', votes: 225, platform: 'Stronger community outreach and volunteer programs' }
-      ]
-    },
-    {
-      id: 'class-rep-2024',
-      title: 'Class Representative Elections',
-      description: 'Vote for your grade level representatives',
-      endDate: '2024-03-20',
-      totalVotes: 623,
-      status: 'active',
-      candidates: [
-        { id: 4, name: 'James Wilson', grade: '10th Grade Rep', votes: 156, platform: 'Better cafeteria options and study spaces' },
-        { id: 5, name: 'Lily Zhang', grade: '9th Grade Rep', votes: 234, platform: 'More extracurricular activities and clubs' },
-        { id: 6, name: 'Alex Thompson', grade: '11th Grade Rep', votes: 233, platform: 'Improved technology and WiFi access' }
-      ]
-    }
-  ];
-
-  const completedElections = [
-    {
-      id: 'spirit-week-theme',
-      title: 'Spirit Week Theme 2024',
-      description: 'Decade theme voting',
-      winner: '80s Retro Theme',
-      totalVotes: 1245,
-      completedDate: '2024-02-28'
-    }
-  ];
-
-  const handleVote = (electionId: string, candidateId: number) => {
-    setHasVoted(prev => ({ ...prev, [electionId]: true }));
-    console.log(`Voted for candidate ${candidateId} in election ${electionId}`);
-    toast({
-      title: "Vote Recorded",
-      description: "Your vote has been successfully recorded!",
-    });
-  };
-
-  const getVotePercentage = (votes: number, total: number) => {
-    return total > 0 ? Math.round((votes / total) * 100) : 0;
-  };
 
   return (
     <div className="min-h-screen bg-gray-50">
       <Header />
-      
+
       <main className="pt-20">
         {/* Hero Section */}
         <section className="bg-gradient-to-r from-valley-blue to-valley-green py-16 text-white">
@@ -114,16 +151,23 @@ const Voting = () => {
                   <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto md:mx-0 mb-6">
                     <Vote className="w-8 h-8" />
                   </div>
-                  <h1 className="text-4xl md:text-5xl font-bold mb-6">Student Voting Platform</h1>
+                  <h1 className="text-4xl md:text-5xl font-bold mb-6">
+                    Student Voting Platform
+                  </h1>
                   <p className="text-xl text-white/90">
-                    Welcome, {student?.name}! Participate in school elections and make your voice heard.
+                    Welcome, {student?.studentName}! Participate in school
+                    elections and make your voice heard.
                   </p>
                 </div>
                 <div className="flex flex-col items-center md:items-end space-y-3">
                   <div className="bg-white/20 backdrop-blur-sm rounded-lg p-4 text-center md:text-right">
                     <p className="text-sm text-white/90">Logged in as:</p>
-                    <p className="font-semibold text-lg">{student?.name}</p>
-                    <p className="text-xs text-white/80">ID: {student?.studentId}</p>
+                    <p className="font-semibold text-lg">
+                      {student?.studentName}
+                    </p>
+                    <p className="text-xs text-white/80">
+                      ID: {student?.studentId}
+                    </p>
                   </div>
                   <Button
                     onClick={handleLogout}
@@ -142,135 +186,124 @@ const Voting = () => {
         {/* Voting Stats */}
         <section className="py-12">
           <div className="container mx-auto px-4">
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-12">
-              <div className="text-center p-6 bg-white rounded-lg shadow-sm">
-                <Users className="w-8 h-8 text-valley-blue mx-auto mb-3" />
-                <div className="text-2xl font-bold text-valley-blue">1,247</div>
-                <div className="text-sm text-muted-foreground">Registered Voters</div>
-              </div>
-              <div className="text-center p-6 bg-white rounded-lg shadow-sm">
-                <Vote className="w-8 h-8 text-valley-green mx-auto mb-3" />
-                <div className="text-2xl font-bold text-valley-green">2</div>
-                <div className="text-sm text-muted-foreground">Active Elections</div>
-              </div>
-              <div className="text-center p-6 bg-white rounded-lg shadow-sm">
-                <CheckCircle className="w-8 h-8 text-valley-gold mx-auto mb-3" />
-                <div className="text-2xl font-bold text-valley-gold">847</div>
-                <div className="text-sm text-muted-foreground">Votes Cast Today</div>
-              </div>
-              <div className="text-center p-6 bg-white rounded-lg shadow-sm">
-                <Trophy className="w-8 h-8 text-valley-green mx-auto mb-3" />
-                <div className="text-2xl font-bold text-valley-green">68%</div>
-                <div className="text-sm text-muted-foreground">Participation Rate</div>
-              </div>
-            </div>
-
-            {/* Active Elections */}
+            {/* Active Polls */}
             <div className="mb-12">
-              <h2 className="text-3xl font-bold text-valley-green mb-8">Active Elections</h2>
+              <h2 className="text-3xl font-bold text-valley-green mb-8">
+                Active Polls
+              </h2>
               <div className="space-y-8">
-                {activeElections.map((election) => (
-                  <Card key={election.id} className="overflow-hidden">
-                    <CardHeader className="bg-valley-green/5">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <CardTitle className="text-xl text-valley-green">{election.title}</CardTitle>
-                          <p className="text-muted-foreground mt-1">{election.description}</p>
-                        </div>
-                        <div className="text-right">
-                          <Badge variant="outline" className="border-valley-green text-valley-green">
-                            <Clock className="w-3 h-3 mr-1" />
-                            Ends {election.endDate}
-                          </Badge>
-                          <div className="text-sm text-muted-foreground mt-1">
-                            {election.totalVotes} votes cast
+                {loading ? (
+                  <p>Loading polls...</p>
+                ) : polls.length === 0 ? (
+                  <p>No active polls found.</p>
+                ) : (
+                  polls.map((poll) => (
+                    <Card key={poll.id} className="overflow-hidden">
+                      <CardHeader className="bg-valley-green/5">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <CardTitle className="text-xl text-valley-green">
+                              {poll.category}
+                            </CardTitle>
                           </div>
-                        </div>
-                      </div>
-                    </CardHeader>
-                    <CardContent className="p-6">
-                      <div className="space-y-4">
-                        {election.candidates.map((candidate) => (
-                          <div key={candidate.id} className="border rounded-lg p-4">
-                            <div className="flex items-center justify-between mb-3">
-                              <div>
-                                <h4 className="font-semibold text-lg">{candidate.name}</h4>
-                                <p className="text-sm text-valley-blue">{candidate.grade}</p>
-                                <p className="text-sm text-muted-foreground mt-1">{candidate.platform}</p>
-                              </div>
-                              <div className="text-right">
-                                <div className="text-lg font-bold text-valley-green">
-                                  {getVotePercentage(candidate.votes, election.totalVotes)}%
-                                </div>
-                                <div className="text-sm text-muted-foreground">
-                                  {candidate.votes} votes
-                                </div>
-                              </div>
-                            </div>
-                            <div className="space-y-2">
-                              <Progress 
-                                value={getVotePercentage(candidate.votes, election.totalVotes)} 
-                                className="h-2"
-                              />
-                              <div className="flex justify-end">
-                                <Button
-                                  onClick={() => handleVote(election.id, candidate.id)}
-                                  disabled={hasVoted[election.id]}
-                                  size="sm"
-                                  className="bg-valley-green hover:bg-valley-green-dark"
-                                >
-                                  {hasVoted[election.id] ? 'Vote Cast' : 'Vote'}
-                                </Button>
-                              </div>
+                          <div className="text-right">
+                            <Badge
+                              variant="outline"
+                              className="border-valley-green text-valley-green"
+                            >
+                              <Clock className="w-3 h-3 mr-1" />
+                              {/* No end date for now */}
+                              Ongoing
+                            </Badge>
+                            <div className="text-sm text-muted-foreground mt-1">
+                              {getTotalVotes(poll.nominations)} votes cast
                             </div>
                           </div>
-                        ))}
-                      </div>
-                      {hasVoted[election.id] && (
-                        <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg">
-                          <div className="flex items-center text-green-700">
-                            <CheckCircle className="w-4 h-4 mr-2" />
-                            <span className="text-sm font-medium">Your vote has been recorded successfully!</span>
-                          </div>
                         </div>
-                      )}
-                    </CardContent>
-                  </Card>
-                ))}
+                      </CardHeader>
+                      <CardContent className="p-6">
+                        <div className="space-y-4">
+                          {poll.nominations && poll.nominations.length > 0 ? (
+                            poll.nominations.map((nom: any, idx: number) => (
+                              <div key={idx} className="border rounded-lg p-4">
+                                <div className="flex items-center justify-between mb-3">
+                                  <div className="flex items-center gap-3">
+                                    {nom.profileImageUrl && (
+                                      <img
+                                        src={nom.profileImageUrl}
+                                        alt={nom.name}
+                                        className="w-10 h-10 rounded-full object-cover"
+                                      />
+                                    )}
+                                    <div>
+                                      <h4 className="font-semibold text-lg">
+                                        {nom.name}
+                                      </h4>
+                                    </div>
+                                  </div>
+                                  <div className="text-right">
+                                    <div className="text-lg font-bold text-valley-green">
+                                      {getVotePercentage(
+                                        nom.totalVotes || 0,
+                                        getTotalVotes(poll.nominations)
+                                      )}
+                                      %
+                                    </div>
+                                    <div className="text-sm text-muted-foreground">
+                                      {nom.totalVotes || 0} votes
+                                    </div>
+                                  </div>
+                                </div>
+                                <div className="space-y-2">
+                                  <Progress
+                                    value={getVotePercentage(
+                                      nom.totalVotes || 0,
+                                      getTotalVotes(poll.nominations)
+                                    )}
+                                    className="h-2"
+                                  />
+                                  <div className="flex justify-end">
+                                    <Button
+                                      onClick={() => handleVote(poll.id, idx)}
+                                      disabled={
+                                        hasVoted[poll.id] || voting === poll.id
+                                      }
+                                      size="sm"
+                                      className="bg-valley-green hover:bg-valley-green-dark"
+                                    >
+                                      {hasVoted[poll.id]
+                                        ? "Vote Cast"
+                                        : voting === poll.id
+                                        ? "Voting..."
+                                        : "Vote"}
+                                    </Button>
+                                  </div>
+                                </div>
+                              </div>
+                            ))
+                          ) : (
+                            <p className="text-muted-foreground">
+                              No nominees yet.
+                            </p>
+                          )}
+                        </div>
+                        {hasVoted[poll.id] && (
+                          <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg">
+                            <div className="flex items-center text-green-700">
+                              <CheckCircle className="w-4 h-4 mr-2" />
+                              <span className="text-sm font-medium">
+                                Your vote has been recorded successfully!
+                              </span>
+                            </div>
+                          </div>
+                        )}
+                      </CardContent>
+                    </Card>
+                  ))
+                )}
               </div>
             </div>
-
-            {/* Completed Elections */}
-            <div>
-              <h2 className="text-3xl font-bold text-valley-green mb-8">Recent Results</h2>
-              <div className="space-y-4">
-                {completedElections.map((election) => (
-                  <Card key={election.id}>
-                    <CardContent className="p-6">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <h4 className="font-semibold text-lg">{election.title}</h4>
-                          <p className="text-muted-foreground">{election.description}</p>
-                          <div className="flex items-center mt-2 text-sm text-valley-green">
-                            <Trophy className="w-4 h-4 mr-1" />
-                            Winner: {election.winner}
-                          </div>
-                        </div>
-                        <div className="text-right">
-                          <Badge variant="secondary">Completed</Badge>
-                          <div className="text-sm text-muted-foreground mt-1">
-                            {election.totalVotes} total votes
-                          </div>
-                          <div className="text-sm text-muted-foreground">
-                            Ended {election.completedDate}
-                          </div>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            </div>
+            {/* Completed Elections (not implemented for Firestore polls) */}
           </div>
         </section>
       </main>
