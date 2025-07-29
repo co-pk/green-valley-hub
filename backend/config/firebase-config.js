@@ -1,15 +1,15 @@
-const admin = require('firebase-admin');
+const admin = require("firebase-admin");
 
 // Initialize Firebase Admin with your service account
-const serviceAccount = require('./serviceAccountKey.json');
+const serviceAccount = require("./service.json");
 
 admin.initializeApp({
-  credential: admin.credential.cert(serviceAccount)
+  credential: admin.credential.cert(serviceAccount),
 });
 
 const db = admin.firestore();
 const settings = {
-  ignoreUndefinedProperties: true
+  ignoreUndefinedProperties: true,
 };
 db.settings(settings);
 
