@@ -20,6 +20,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { collection, query, where, onSnapshot, doc, updateDoc, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { LogOut } from 'lucide-react';
+import { auth } from '@/lib/firebase';
 
 interface Application {
   studentId: string;
@@ -124,51 +125,45 @@ const AdminPortal = () => {
   }, [isAdmin, admin?.uid]);
 
   // Handle application approval/rejection
-  const handleApplicationDecision = async (studentId: string, approved: boolean) => {
+  const handleApplicationDecision = async (studentId: string, applicationId: string, approved: boolean) => {
     setLoading(true);
     try {
-      const studentRef = doc(db, 'students', studentId);
-      const studentDoc = await getDoc(studentRef);
-
-      if (!studentDoc.exists()) {
-        throw new Error('Application not found');
+      // Defensive: ensure admin is signed in
+      const currentUser = auth.currentUser;
+      if (!currentUser) {
+        toast({
+          title: 'Session expired',
+          description: 'Please sign in again.',
+          variant: 'destructive',
+        });
+        navigate('/admin-login');
+        return;
       }
-
-      const studentData = studentDoc.data();
-      const decision = approved ? 'approved' : 'rejected';
-      const updateData: {
-        applicationStatus: 'approved' | 'rejected';
-        updatedAt: Date;
-        updatedBy: string | undefined;
-        activationCode?: string;
-      } = {
-        applicationStatus: decision,
-        updatedAt: new Date(),
-        updatedBy: admin?.uid
-      };
-
-      // Generate activation code for approved applications
-      if (approved) {
-        updateData.activationCode = Math.random().toString(36).substring(2, 8).toUpperCase();
-      }
-
-      await updateDoc(studentRef, updateData);
-
-      // Send email notification
-      await fetch('/api/admin/send-decision-email', {
+      const idToken = await currentUser.getIdToken();
+      const response = await fetch('/api/admin/decision', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          to: studentData.email,
-          studentName: studentData.studentName,
-          decision,
-          activationCode: approved ? updateData.activationCode : undefined
-        })
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${idToken}`,
+        },
+        body: JSON.stringify({ studentId, applicationId, approved }),
       });
-
+      const data = await response.json();
+      if (response.status === 401) {
+        toast({
+          title: 'Session expired',
+          description: 'Please sign in again.',
+          variant: 'destructive',
+        });
+        navigate('/admin-login');
+        return;
+      }
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to process application');
+      }
       toast({
         title: 'Success',
-        description: `Application ${decision} successfully`,
+        description: `Application ${approved ? 'approved' : 'rejected'} successfully`,
       });
     } catch (error) {
       console.error('Error processing application:', error);
@@ -259,7 +254,7 @@ const AdminPortal = () => {
                         <div className="flex gap-2">
                           <Button
                             size="sm"
-                            onClick={() => handleApplicationDecision(app.studentId, true)}
+                            onClick={() => handleApplicationDecision(app.studentId, app.referenceId!, true)}
                             disabled={loading}
                           >
                             Approve
@@ -267,7 +262,7 @@ const AdminPortal = () => {
                           <Button
                             size="sm"
                             variant="destructive"
-                            onClick={() => handleApplicationDecision(app.studentId, false)}
+                            onClick={() => handleApplicationDecision(app.studentId, app.referenceId!, false)}
                             disabled={loading}
                           >
                             Reject

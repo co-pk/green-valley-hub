@@ -182,66 +182,107 @@ app.post('/api/admin/login', async (req, res) => {
 
 // Application decision endpoint
 app.post('/api/admin/decision', authenticateAdmin, async (req, res) => {
-    const { studentId, approved } = req.body;
-    
-    if (!studentId || approved === undefined) {
+    const { studentId, applicationId, approved } = req.body;
+    if ((!studentId && !applicationId) || approved === undefined) {
         return res.status(400).json({
             success: false,
-            message: 'Student ID and decision are required'
+            message: 'Student ID or Application ID and decision are required'
         });
     }
-
     try {
-        // Find student document
-        const studentsSnapshot = await db.collection('students')
-            .where('studentId', '==', studentId)
-            .limit(1)
-            .get();
-
-        if (studentsSnapshot.empty) {
-            logger.warning('Application decision failed - student not found', { studentId });
-            return res.status(404).json({
-                success: false,
-                message: 'Application not found'
-            });
+        // Lookup student by studentId or applicationId (Firestore doc ID)
+        let studentDoc, studentData;
+        if (studentId) {
+            const studentsSnapshot = await db.collection('students')
+                .where('studentId', '==', studentId)
+                .limit(1)
+                .get();
+            if (studentsSnapshot.empty) {
+                logger.warning('Application decision failed - student not found by studentId', { studentId });
+                return res.status(404).json({
+                    success: false,
+                    message: 'Application not found (studentId)'
+                });
+            }
+            studentDoc = studentsSnapshot.docs[0];
+            studentData = studentDoc.data();
+        } else {
+            studentDoc = await db.collection('students').doc(applicationId).get();
+            if (!studentDoc.exists) {
+                logger.warning('Application decision failed - student not found by applicationId', { applicationId });
+                return res.status(404).json({
+                    success: false,
+                    message: 'Application not found (applicationId)'
+                });
+            }
+            studentData = studentDoc.data();
         }
-
-        const studentDoc = studentsSnapshot.docs[0];
-        const studentData = studentDoc.data();
-        
         // Get parent data
         const parentDoc = await db.collection('parents').doc(studentData.parentRef).get();
         if (!parentDoc.exists) {
-            logger.error('Parent document not found', { studentId, parentRef: studentData.parentRef });
+            logger.error('Parent document not found', { studentId: studentData.studentId, parentRef: studentData.parentRef });
             return res.status(404).json({
                 success: false,
                 message: 'Parent information not found'
             });
         }
         const parentData = parentDoc.data();
-
-        // Update application status
-        await updateApplicationStatus(studentDoc, studentData.parentRef, approved);
-
-        // Send emails
-        await sendApplicationEmails(studentData, parentData, approved);
-
+        // Validate email fields
+        if (!studentData.studentEmail || !parentData.email) {
+            logger.error('Missing email fields for student or parent', {
+                studentId: studentData.studentId,
+                studentEmail: studentData.studentEmail,
+                parentEmail: parentData.email
+            });
+            return res.status(400).json({
+                success: false,
+                message: 'Student or parent email address missing in records.'
+            });
+        }
+        // Update application status (student & parent)
+        try {
+            await updateApplicationStatus(studentDoc, studentData.parentRef, approved);
+        } catch (err) {
+            logger.error('Error updating application status in Firestore', {
+                error: err.message,
+                studentId: studentData.studentId
+            });
+            return res.status(500).json({
+                success: false,
+                message: 'Failed to update application status in Firestore.'
+            });
+        }
+        // Send emails (approval/rejection)
+        try {
+            await sendApplicationEmails(studentData, parentData, approved);
+        } catch (err) {
+            logger.error('Error sending application decision emails', {
+                error: err.message,
+                studentId: studentData.studentId
+            });
+            return res.status(500).json({
+                success: false,
+                message: 'Application status updated, but failed to send notification emails.'
+            });
+        }
         logger.info('Application processed successfully', {
-            studentId,
+            studentId: studentData.studentId,
+            applicationId: studentDoc.id,
             decision: approved ? 'approved' : 'rejected',
             adminEmail: req.admin.email
         });
-
         res.json({
             success: true,
             message: `Application ${approved ? 'approved' : 'rejected'} successfully`,
-            studentId
+            studentId: studentData.studentId,
+            applicationId: studentDoc.id
         });
     } catch (error) {
         logger.error('Error processing application decision', {
             error: error.message,
-            studentId,
-            adminEmail: req.admin.email
+            studentId: studentId,
+            applicationId: applicationId,
+            adminEmail: req.admin?.email
         });
         res.status(500).json({
             success: false,
