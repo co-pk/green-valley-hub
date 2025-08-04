@@ -50,6 +50,7 @@ import {
   generatePdfApplication,
 } from "@/utils/others";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { sendSmsMessage } from "@/utils/helpers";
 
 const AdminPortal = () => {
   const [applications, setApplications] = useState<any[]>([]);
@@ -159,6 +160,41 @@ const AdminPortal = () => {
       } successfully`,
     });
     // loading the applications again
+    if (approved) {
+      // If approved, send login credentials to both student and parent
+      const studentLoginMsg = `Congratulations! Your application has been approved.\n\nStudent Login Credentials:\nID: ${application.studentId}\nPassword: ${application.studentPassword}\n\nYou can now log in to your account.`;
+      const parentLoginMsg = `Congratulations! Your child's application has been approved.\n\nParent Login Credentials:\nID: ${application.parentId}\nPassword: ${application.parentPassword}\n\nYou can now log in to your account.`;
+
+      // Send to student
+      await sendSmsMessage(
+        application.emergencyPhone,
+        studentLoginMsg,
+        "weAfHe3mTtFWoRGGvlWl8a1Kn"
+      );
+      // Send to parent (if parent phone is available)
+      if (application.parentPhone) {
+        await sendSmsMessage(
+          application.parentPhone,
+          parentLoginMsg,
+          "weAfHe3mTtFWoRGGvlWl8a1Kn"
+        );
+      }
+    } else {
+      // If rejected, send rejection message
+      const rejectionMsg = `We regret to inform you that your application has been rejected. Please re-apply or contact us at admissions@greenvalleyschool.com for further assistance.`;
+      await sendSmsMessage(
+        application.emergencyPhone,
+        rejectionMsg,
+        "weAfHe3mTtFWoRGGvlWl8a1Kn"
+      );
+      if (application.parentPhone) {
+        await sendSmsMessage(
+          application.parentPhone,
+          rejectionMsg,
+          "weAfHe3mTtFWoRGGvlWl8a1Kn"
+        );
+      }
+    }
     const newApplications = await getApplicationsFromDatabaseInOrder();
     setApplications(newApplications);
   };
