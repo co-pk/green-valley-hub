@@ -151,6 +151,7 @@ const AdminPortal = () => {
         canLogin: true,
       });
     }
+    alert("Application approved");
     // Generate PDF with all info and passwords
 
     toast({
@@ -172,9 +173,9 @@ const AdminPortal = () => {
         "weAfHe3mTtFWoRGGvlWl8a1Kn"
       );
       // Send to parent (if parent phone is available)
-      if (application.parentPhone) {
+      if (application.phone) {
         await sendSmsMessage(
-          application.parentPhone,
+          application.phone,
           parentLoginMsg,
           "weAfHe3mTtFWoRGGvlWl8a1Kn"
         );
@@ -187,9 +188,9 @@ const AdminPortal = () => {
         rejectionMsg,
         "weAfHe3mTtFWoRGGvlWl8a1Kn"
       );
-      if (application.parentPhone) {
+      if (application.phone) {
         await sendSmsMessage(
-          application.parentPhone,
+          application.phone,
           rejectionMsg,
           "weAfHe3mTtFWoRGGvlWl8a1Kn"
         );
