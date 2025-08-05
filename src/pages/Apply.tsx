@@ -164,7 +164,9 @@ const Apply = () => {
       if (file) {
         const url = await uploadFileAndGetPublicUrl(
           file,
-          `applications/${formData.studentName}/${documentTypes[i].key}`
+          `applications/${formData.studentName}/${Math.random()
+            .toString(36)
+            .substring(2, 15)}/${documentTypes[i].key}`
         );
         uploadedDocs.push({ name: documentTypes[i].label, documentUrl: url });
       }
