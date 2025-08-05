@@ -60,19 +60,26 @@ const getImageBase64FromPublic = (url: string): Promise<string> => {
  */
 export const generatePdfApplication = async (
   application: any,
-  headerImagePath: string = "/our-logo.png",
-  studentPassword?: string,
-  parentPassword?: string
+  headerImagePath: string = "/our-logo.png"
 ) => {
   const pdf = new jsPDF();
 
-  // Load the image from the public directory
+  // Fix: Ensure the image path is absolute and try both with and without leading slash
   let imageDataUrl: string | null = null;
-  try {
-    imageDataUrl = await getImageBase64FromPublic(headerImagePath);
-  } catch (e) {
-    // If image fails to load, just skip the image
-    imageDataUrl = null;
+  let triedPaths = [
+    headerImagePath,
+    headerImagePath.startsWith("/") ? headerImagePath : "/" + headerImagePath,
+    headerImagePath.startsWith("/")
+      ? headerImagePath.slice(1)
+      : headerImagePath,
+  ];
+  for (let path of triedPaths) {
+    try {
+      imageDataUrl = await getImageBase64FromPublic(path);
+      if (imageDataUrl) break;
+    } catch (e) {
+      imageDataUrl = null;
+    }
   }
 
   // Header with image and text
@@ -83,7 +90,17 @@ export const generatePdfApplication = async (
   // Add the image if available
   if (imageDataUrl) {
     // Place image at left, max height 30, keep aspect ratio
-    pdf.addImage(imageDataUrl, "PNG", 10, 5, 30, 30);
+    try {
+      pdf.addImage(imageDataUrl, "PNG", 10, 5, 30, 30);
+    } catch (err) {
+      // If addImage fails, skip image
+      // Optionally, you can log the error here
+    }
+  } else {
+    // Optionally, you can add a placeholder or warning text if image is missing
+    // pdf.setTextColor(200, 0, 0);
+    // pdf.setFontSize(10);
+    // pdf.text("Logo not found", 10, 20);
   }
 
   // Add the header text "GREEN VALLEY APPLICATION"
@@ -125,11 +142,6 @@ export const generatePdfApplication = async (
     { label: "Additional Info", value: application.additionalInfo },
     { label: "Payment Method", value: application.paymentMethod },
     { label: "Cardholder Name", value: application.cardholderName },
-    // Add passwords if provided
-    studentPassword
-      ? { label: "Student Password", value: studentPassword }
-      : null,
-    parentPassword ? { label: "Parent Password", value: parentPassword } : null,
   ].filter(Boolean);
 
   fields.forEach((field) => {

@@ -51,6 +51,7 @@ import {
 } from "@/utils/others";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { sendSmsMessage } from "@/utils/helpers";
+import { uploadFileAndGetPublicUrl } from "@/utils/supabase";
 
 const AdminPortal = () => {
   const [applications, setApplications] = useState<any[]>([]);
@@ -124,6 +125,7 @@ const AdminPortal = () => {
   ) => {
     console.log(studentId, approved);
     const application = applications.find((app) => app.studentId === studentId);
+
     if (application) {
       application.applicationStatus = approved ? "approved" : "rejected";
       await updateApplicationInDatabase(application);
@@ -141,14 +143,18 @@ const AdminPortal = () => {
         where("parentId", "==", application.parentId)
       )
     );
+    const studentPassword = generatePassword();
     if (!studentDoc.empty) {
       await updateDoc(doc(db, "students", studentDoc.docs[0].id), {
         canLogin: true,
+        password: studentPassword,
       });
     }
+    const parentPassword = generatePassword();
     if (!parentDoc.empty) {
       await updateDoc(doc(db, "parents", parentDoc.docs[0].id), {
         canLogin: true,
+        password: parentPassword,
       });
     }
     // Generate PDF with all info and passwords
@@ -159,22 +165,23 @@ const AdminPortal = () => {
         approved ? "approved" : "rejected"
       } successfully`,
     });
+
     // loading the applications again
     if (approved) {
       // If approved, send login credentials to both student and parent
-      const studentLoginMsg = `Congratulations! Your application has been approved.\n\nStudent Login Credentials:\nID: ${application.studentId}\nPassword: ${application.studentPassword}\n\nYou can now log in to your account.`;
-      const parentLoginMsg = `Congratulations! Your child's application has been approved.\n\nParent Login Credentials:\nID: ${application.parentId}\nPassword: ${application.parentPassword}\n\nYou can now log in to your account.`;
+      const studentLoginMsg = `Congratulations! Your application has been approved.\n\nStudent Login Credentials:\nID: ${application.studentId}\nPassword: ${studentPassword} \n\nYou can now log in to your account.`;
+      const parentLoginMsg = `Congratulations! Dear ${application.parentName}, Your child's application to Green Valley School has been approved.\n\nParent Login Credentials:\nID: ${application.parentId}\nPassword: ${parentPassword}\n\nYou can now log in to your account.`;
 
       // Send to student
       await sendSmsMessage(
-        application.emergencyPhone,
+        application.phone,
         studentLoginMsg,
         "weAfHe3mTtFWoRGGvlWl8a1Kn"
       );
       // Send to parent (if parent phone is available)
-      if (application.parentPhone) {
+      if (application.emergencyPhone) {
         await sendSmsMessage(
-          application.parentPhone,
+          application.emergencyPhone,
           parentLoginMsg,
           "weAfHe3mTtFWoRGGvlWl8a1Kn"
         );
@@ -227,10 +234,10 @@ const AdminPortal = () => {
     }
     setNominationUploading(true);
     try {
-      const imageUrl = await uploadNominationProfileImage({
-        file: nominationImage,
-        studentName: nominationName,
-      });
+      const imageUrl = await uploadFileAndGetPublicUrl(
+        nominationImage,
+        `polls/${selectedPollId}/nomination-${nominationName}.jpg`
+      );
       await addNominationToPoll({
         pollId: selectedPollId,
         name: nominationName,
@@ -311,10 +318,10 @@ const AdminPortal = () => {
     try {
       let imageUrl: string | undefined = undefined;
       if (editingNominationImage) {
-        imageUrl = await uploadNominationProfileImage({
-          file: editingNominationImage,
-          studentName: editingNominationName,
-        });
+        imageUrl = await uploadFileAndGetPublicUrl(
+          editingNominationImage,
+          `polls/${pollId}/nomination-${idx}.jpg`
+        );
       }
       await editNomination({
         pollId,

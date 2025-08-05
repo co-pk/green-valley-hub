@@ -6,11 +6,23 @@ const supabaseKey =
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 export const uploadFileAndGetPublicUrl = async (file, path) => {
+  // Upload the file
   const { data, error } = await supabase.storage
     .from("files")
     .upload(path, file);
+
   if (error) {
     throw error;
   }
-  return data.path;
+
+  // Get the public URL for the uploaded file
+  const { data: publicUrlData, error: publicUrlError } = supabase.storage
+    .from("files")
+    .getPublicUrl(path);
+
+  if (publicUrlError) {
+    throw publicUrlError;
+  }
+
+  return publicUrlData.publicUrl;
 };

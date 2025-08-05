@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -16,8 +16,11 @@ import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
 import { useStudentStore } from "@/store/student.store";
 
+const ADMISSION_DECISION_KEY = "gv_admission_decision";
+
 const StudentPortal = () => {
   const { student, setStudent, clearStudent } = useStudentStore();
+  const [showAdmission, setShowAdmission] = useState(false);
 
   const navigate = useNavigate();
 
@@ -27,6 +30,14 @@ const StudentPortal = () => {
     }
   }, [navigate, student]);
 
+  useEffect(() => {
+    // Only show the admission message if not previously accepted/declined
+    const decision = localStorage.getItem(ADMISSION_DECISION_KEY);
+    if (!decision) {
+      setShowAdmission(true);
+    }
+  }, [student]);
+
   const handleLogout = () => {
     clearStudent();
     toast({
@@ -34,6 +45,25 @@ const StudentPortal = () => {
       description: "You have been successfully logged out.",
     });
     navigate("/student-login");
+  };
+
+  const handleAdmissionDecision = (decision: "accepted" | "declined") => {
+    localStorage.setItem(ADMISSION_DECISION_KEY, decision);
+    setShowAdmission(false);
+    if (decision === "accepted") {
+      toast({
+        title: "Congratulations!",
+        description:
+          "You have accepted your admission. Welcome to Green Valley School!",
+      });
+    } else {
+      toast({
+        title: "Admission Declined",
+        description:
+          "You have declined your admission. If this was a mistake, please contact the school.",
+        variant: "destructive",
+      });
+    }
   };
 
   // Show loading while checking authentication
@@ -128,6 +158,43 @@ const StudentPortal = () => {
             </div>
           </div>
         </section>
+
+        {/* Admission Congratulations Modal/Message */}
+        {showAdmission && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+            <div className="bg-white rounded-lg shadow-2xl max-w-md w-full p-8 text-center border-2 border-valley-green">
+              <h2 className="text-2xl font-bold text-valley-green mb-4">
+                Congratulations, {student.studentName}!
+              </h2>
+              <p className="mb-4 text-gray-700">
+                We are thrilled to inform you that you have been{" "}
+                <span className="font-semibold text-valley-green">
+                  granted admission
+                </span>{" "}
+                to Green Valley School.
+              </p>
+              <p className="mb-6 text-gray-600">
+                Please confirm your decision below. Once you accept or decline,
+                this message will not appear again.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                <Button
+                  className="w-full sm:w-auto bg-valley-green text-white font-bold hover:bg-valley-green/90"
+                  onClick={() => handleAdmissionDecision("accepted")}
+                >
+                  Accept Admission
+                </Button>
+                <Button
+                  className="w-full sm:w-auto bg-red-500 text-white font-bold hover:bg-red-600"
+                  onClick={() => handleAdmissionDecision("declined")}
+                  variant="destructive"
+                >
+                  Decline Admission
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Welcome Section */}
         <section className="py-12">

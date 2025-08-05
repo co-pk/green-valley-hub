@@ -39,6 +39,7 @@ import {
   createStudentInDatabase,
   createParentInDatabase,
 } from "@/utils/firebase";
+import { uploadFileAndGetPublicUrl } from "@/utils/supabase";
 
 const Apply = () => {
   const { toast } = useToast();
@@ -161,10 +162,10 @@ const Apply = () => {
     for (let i = 0; i < documents.length; i++) {
       const file = documents[i];
       if (file) {
-        const url = await uploadDocumentsToStorage({
+        const url = await uploadFileAndGetPublicUrl(
           file,
-          studentName: formData.studentName,
-        });
+          `applications/${formData.studentName}/${documentTypes[i].key}`
+        );
         uploadedDocs.push({ name: documentTypes[i].label, documentUrl: url });
       }
     }
@@ -237,9 +238,7 @@ const Apply = () => {
           studentPhone: formData.phone,
           parentPhone: formData.emergencyPhone,
         },
-        "/logo.png",
-        studentPassword,
-        parentPassword
+        "/logo.png"
       );
       toast({
         title: "Application Submitted!",
